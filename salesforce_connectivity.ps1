@@ -98,3 +98,5 @@ if ($httpResult.Error) {
 
 Write-Section "Done"
 Write-Host "Completed at: $(Get-Date -Format 'yyyy/MM/dd HH:mm:ss.fff')"
+Write-Host ""
+Read-Host "Press Enter to close"
