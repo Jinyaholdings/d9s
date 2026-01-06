@@ -37,5 +37,8 @@ echo curl/certutil not found; HTTPS check skipped.
 :done_https
 echo.
 echo End: %date% %time%
+echo.
+Pause
 
 endlocal
+
