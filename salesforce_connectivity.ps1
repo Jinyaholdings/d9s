@@ -10,6 +10,11 @@ function Write-Section($title) {
   Write-Host "==== $title ===="
 }
 
+function Format-Ms($value) {
+  if ($null -eq $value) { return 'n/a' }
+  return [string]$value
+}
+
 function Measure-Block($label, [scriptblock]$block) {
   $sw = [System.Diagnostics.Stopwatch]::StartNew()
   $result = $null
@@ -22,7 +27,7 @@ function Measure-Block($label, [scriptblock]$block) {
   $sw.Stop()
   [pscustomobject]@{
     Label = $label
-    ElapsedMs = $sw.ElapsedMilliseconds
+    ElapsedMs = [int64]$sw.ElapsedMilliseconds
     Result = $result
     Error = $err
   }
@@ -54,7 +59,7 @@ Write-Host "Env HTTPS_PROXY: $env:HTTPS_PROXY"
 
 Write-Section "DNS"
 $dnsResults = Measure-Block "Resolve-DnsName" { Resolve-DnsName -Name $targetHost -Type A -ErrorAction Stop }
-Write-Host "Resolve-DnsName: ${($dnsResults.ElapsedMs)} ms"
+Write-Host ("Resolve-DnsName: {0} ms" -f (Format-Ms $dnsResults.ElapsedMs))
 if ($dnsResults.Error) { Write-Host "Error: $($dnsResults.Error.Exception.Message)" }
 else { $dnsResults.Result | Select-Object -First 5 | ForEach-Object { Write-Host "  $($_.Name) -> $($_.IPAddress)" } }
 
@@ -65,7 +70,7 @@ $tcpResult = Measure-Block "TcpClient.Connect" {
   $client.Connect($targetHost, $targetPort)
   $client
 }
-Write-Host "TcpClient.Connect: ${($tcpResult.ElapsedMs)} ms"
+Write-Host ("TcpClient.Connect: {0} ms" -f (Format-Ms $tcpResult.ElapsedMs))
 if ($tcpResult.Error) { Write-Host "Error: $($tcpResult.Error.Exception.Message)" }
 
 Write-Section "TLS Handshake"
@@ -76,7 +81,7 @@ $tlsResult = Measure-Block "SslStream.AuthenticateAsClient" {
   $ssl.AuthenticateAsClient($targetHost)
   $ssl
 }
-Write-Host "SslStream.AuthenticateAsClient: ${($tlsResult.ElapsedMs)} ms"
+Write-Host ("SslStream.AuthenticateAsClient: {0} ms" -f (Format-Ms $tlsResult.ElapsedMs))
 if ($tlsResult.Error) {
   Write-Host "Error: $($tlsResult.Error.Exception.Message)"
 } else {
@@ -89,7 +94,7 @@ Write-Section "HTTPS GET (no auth)"
 $httpResult = Measure-Block "Invoke-WebRequest" {
   Invoke-WebRequest -Uri "https://$targetHost/" -Method Get -UseBasicParsing -TimeoutSec 30
 }
-Write-Host "Invoke-WebRequest: ${($httpResult.ElapsedMs)} ms"
+Write-Host ("Invoke-WebRequest: {0} ms" -f (Format-Ms $httpResult.ElapsedMs))
 if ($httpResult.Error) {
   Write-Host "Error: $($httpResult.Error.Exception.Message)"
 } else {
