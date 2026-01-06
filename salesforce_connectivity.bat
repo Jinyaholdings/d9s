@@ -1,14 +1,41 @@
 @echo off
 setlocal
-set SCRIPT_DIR=%~dp0
-set PS_SCRIPT=%SCRIPT_DIR%salesforce_diag.ps1
+set TARGET=login.salesforce.com
 
-if not exist "%PS_SCRIPT%" (
-  echo Missing PowerShell script: %PS_SCRIPT%
-  exit /b 1
+echo Running Salesforce connectivity diagnostics (BAT-only)...
+echo Start: %date% %time%
+echo.
+
+echo ==== DNS (nslookup) ====
+nslookup %TARGET%
+echo.
+
+echo ==== ICMP (ping) ====
+ping -n 4 %TARGET%
+echo.
+
+echo ==== Route (tracert, max 5 hops) ====
+tracert -d -h 5 %TARGET%
+echo.
+
+echo ==== HTTPS (curl or certutil) ====
+where curl >nul 2>nul
+if %errorlevel%==0 (
+  curl -I https://%TARGET%/
+  goto :done_https
 )
 
-echo Running Salesforce connectivity diagnostics...
-PowerShell -NoProfile -ExecutionPolicy Bypass -File "%PS_SCRIPT%"
+where certutil >nul 2>nul
+if %errorlevel%==0 (
+  rem Downloads to temp cache and validates TLS
+  certutil -urlcache -split -f https://%TARGET%/ NUL
+  goto :done_https
+)
+
+echo curl/certutil not found; HTTPS check skipped.
+
+:done_https
+echo.
+echo End: %date% %time%
 
 endlocal
