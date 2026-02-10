@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-IMAGE="eclipse-temurin:8-jdk"
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+IMAGE="eclipse-temurin:8-jre"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-LOGINURL="${SFDC_LOGINURL:-https://login.test.salesforce.com}"
+LOGINURL="${SFDC_LOGINURL:-https://login.salesforce.com}"
 API_VERSION="60.0"
 CLS_NAMESPACE="ps"
 
@@ -13,7 +13,6 @@ if [[ "${LOGINURL}" == *"/services/Soap/u/"* ]]; then
 else
   BASE_URL="$(echo "${LOGINURL}" | sed -E 's#(https?://[^/]+).*#\1#')"
 fi
-
 CLS_SERVICE_URL="${BASE_URL}/services/Soap/class"
 
 run_case() {
@@ -28,10 +27,10 @@ run_case() {
     -e SFDC_CLS_NAMESPACE="${CLS_NAMESPACE}" \
     -e SFDC_OUTPUT_FILE="salesforce_connectivity_results.log" \
     -e SFDC_CASE_LABEL="${label}" \
-    -v "${ROOT_DIR}:/work:Z" \
-    -w /work/sf_diag \
+    -v "${SCRIPT_DIR}:/work:Z" \
+    -w /work \
     "${IMAGE}" \
-    bash -lc "javac SalesforceConnectivity.java && java ${java_opts} SalesforceConnectivity"
+    bash -lc "java ${java_opts} SalesforceConnectivity"
 }
 
 run_case "default" ""
